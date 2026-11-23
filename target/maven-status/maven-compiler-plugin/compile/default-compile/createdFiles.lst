@@ -1,0 +1,7 @@
+com\example\productsapp\entities\Product.class
+com\example\productsapp\ProductsApplication.class
+com\example\productsapp\repository\ProductRepository.class
+com\example\productsapp\web\ProductController.class
+com\example\productsapp\security\SecurityConfig.class
+com\example\productsapp\entities\Product$ProductBuilder.class
+com\example\productsapp\web\SecurityController.class

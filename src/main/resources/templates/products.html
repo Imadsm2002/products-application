@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{template1}">
+<head>
+    <title>Liste des Produits</title>
+</head>
+<body>
+    <div layout:fragment="content1">
+
+        <!-- Message flash de succès -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Tableau de Bord : Statistiques rapides -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card card-custom p-3 bg-white border-start border-primary border-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3 me-3">
+                            <i class="bi bi-box-seam fs-3"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small">Total Produits</span>
+                            <h4 class="mb-0 fw-bold" th:text="${totalProductsCount}">0</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-custom p-3 bg-white border-start border-success border-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success bg-opacity-10 text-success p-3 rounded-3 me-3">
+                            <i class="bi bi-cash-stack fs-3"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small">Valeur Totale du Stock</span>
+                            <h4 class="mb-0 fw-bold" th:text="${#numbers.formatDecimal(totalStockValue, 1, 'COMMA', 2, 'POINT')} + ' DH'">0.00 DH</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-custom p-3 bg-white border-start border-warning border-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-3 me-3">
+                            <i class="bi bi-exclamation-triangle fs-3"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small">Stock Faible (&le; 10)</span>
+                            <h4 class="mb-0 fw-bold" th:text="${lowStockCount}">0</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte Principale : Filtres & Liste des Produits -->
+        <div class="card card-custom p-4 bg-white">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <h4 class="mb-0 fw-bold text-secondary">
+                    <i class="bi bi-boxes me-2 text-primary"></i>Catalogue des Produits
+                </h4>
+
+                <div class="d-flex gap-2">
+                    <a th:href="@{/user/export/csv}" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exporter CSV
+                    </a>
+                    <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/formProduct}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg me-1"></i> Nouveau Produit
+                    </a>
+                </div>
+            </div>
+
+            <!-- Formulaire de Recherche par Mot-Clé -->
+            <form method="get" th:action="@{/user/index}" class="row g-2 mb-4">
+                <div class="col-md-6 col-lg-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                        <input type="text" name="keyword" th:value="${keyword}"
+                               class="form-control" placeholder="Rechercher par nom de produit...">
+                        <button type="submit" class="btn btn-primary">Rechercher</button>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <a th:if="${keyword != null and !keyword.isEmpty()}"
+                       th:href="@{/user/index}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Réinitialiser
+                    </a>
+                </div>
+            </form>
+
+            <!-- Table des Produits -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-3">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 80px;">ID</th>
+                            <th scope="col">Désignation</th>
+                            <th scope="col" class="text-end">Prix Unitaire</th>
+                            <th scope="col" class="text-center">Quantité</th>
+                            <th scope="col" class="text-end">Valeur Totale</th>
+                            <th scope="col" sec:authorize="hasRole('ADMIN')" class="text-center" style="width: 180px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${listProducts}">
+                            <td class="fw-semibold text-muted" th:text="${p.id}">1</td>
+                            <td class="fw-semibold text-dark" th:text="${p.name}">Ordinateur Portable</td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(p.price, 1, 'COMMA', 2, 'POINT')} + ' DH'">8500.00 DH</td>
+                            <td class="text-center">
+                                <span th:if="${p.quantity > 10}" class="badge bg-success" th:text="${p.quantity}">15</span>
+                                <span th:if="${p.quantity > 0 and p.quantity <= 10}" class="badge bg-warning text-dark" th:text="${p.quantity}">5</span>
+                                <span th:if="${p.quantity == 0}" class="badge bg-danger">Rupture (0)</span>
+                            </td>
+                            <td class="text-end text-muted" th:text="${#numbers.formatDecimal(p.price * p.quantity, 1, 'COMMA', 2, 'POINT')} + ' DH'"></td>
+                            
+                            <!-- Actions réservées au rôle ADMIN -->
+                            <td sec:authorize="hasRole('ADMIN')" class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a th:href="@{/admin/editProduct(id=${p.id}, keyword=${keyword}, page=${currentPage})}"
+                                       class="btn btn-outline-primary" title="Modifier">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')"
+                                       th:href="@{/admin/delete(id=${p.id}, keyword=${keyword}, page=${currentPage})}"
+                                       class="btn btn-outline-danger" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(listProducts)}">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                Aucun produit trouvé correspondant aux critères.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Bootstrap -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-3 border-top">
+                <span class="text-muted small">
+                    Affichage de <b th:text="${#lists.size(listProducts)}">0</b> sur <b th:text="${totalElements}">0</b> produit(s)
+                </span>
+
+                <nav th:if="${totalPages > 1}">
+                    <ul class="pagination pagination-sm mb-0">
+                        <!-- Bouton Précédent -->
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/user/index(page=${currentPage - 1}, keyword=${keyword})}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+
+                        <!-- Numéros de pages -->
+                        <li class="page-item" th:each="page, status : ${pages}"
+                            th:classappend="${status.index == currentPage} ? 'active'">
+                            <a class="page-link"
+                               th:href="@{/user/index(page=${status.index}, keyword=${keyword})}"
+                               th:text="${status.index + 1}">1</a>
+                        </li>
+
+                        <!-- Bouton Suivant -->
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                            <a class="page-link" th:href="@{/user/index(page=${currentPage + 1}, keyword=${keyword})}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
